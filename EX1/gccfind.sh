@@ -17,5 +17,3 @@ do
 	name+=.out
 	gcc -w -o $name $x 
 done
-
-
