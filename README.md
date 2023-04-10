@@ -92,31 +92,3 @@ Before you begin, ensure that you have the following prerequisites installed:
 ```sh
 git clone https://github.com/Davidkatom/Operating_Systems
 ```
-
-2. Change to the project directory:
-```sh
-cd readme-ai
-```
-
-3. Install the dependencies:
-```sh
-chmod +x main.sh
-```
-
-### 🤖 Using readme-ai
-
-```sh
-./main.sh
-```
-
-### 🧪 Running Tests
-```sh
-#run tests
-```
-
-<hr />
-
-## 🛠 Future Development
-- [X] [📌  COMPLETED-TASK]
-- [ ] [📌  INSERT-TASK]
-- [ ] [📌  INSERT-TASK]
