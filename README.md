@@ -74,7 +74,7 @@ readme-ai
 | File       | Summary                                                                                                                                                                                                                |
 |:-----------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | tennis.sh  | This code is a two-player game in which each player takes turns picking a number from 0 to their current score. The player with the higher number gains a point, and the first player to reach 3 points wins the game. |
-| gccfind.sh | This code changes the directory to the first parameter, checks if there are enough parameters, and then searches for files with the . c extension that contain the second parameter.                                   |
+| gccfind.sh | This code changes the directory to the first parameter, checks if there are enough parameters, and then searches for files with the . c extension that contain the second parameter and then compiles them.                                   |
 
 </details>
 <hr />
