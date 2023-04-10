@@ -32,12 +32,6 @@ readme-ai
 - [🔮 Features](#-features)
 - [⚙️ Project Structure](#project-structure)
 - [🧩 Modules](#modules)
-- [🏎💨 Getting Started](#-getting-started)
-- [🗺 Roadmap](#-roadmap)
-- [🤝 Contributing](#-contributing)
-- [🪪 License](#-license)
-- [📫 Contact](#-contact)
-- [🙏 Acknowledgments](#-acknowledgments)
 
 ---
 
