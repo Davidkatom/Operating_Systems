@@ -1,4 +1,5 @@
 #!/bin/bash
+#David Shnaiderov 209198308
 score=0
 player1=50
 player2=50

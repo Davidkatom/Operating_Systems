@@ -1,3 +1,5 @@
+//David Shnaiderov 209198308
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -64,6 +66,9 @@ int main(int argc, char *argv[]) {
         }
 
         if (strcmp(args[0], "cd") == 0) {
+            if (chdir(args[1]) < 0) {
+                perror("cd failed");
+            }
             add_to_history(cmd, getpid()); // Add the command and PID to history in the parent process
             continue;
         }
@@ -76,10 +81,17 @@ int main(int argc, char *argv[]) {
 
         pid_t pid = fork();
         if (pid < 0) {
+            char error_message[50];
+            perror("execvp failed");
+
+            sprintf(error_message, "%s failed", args[0]);
+            perror(error_message);
             exit(1);
         } else if (pid == 0) {
             if (execvp(args[0], args) < 0) {
-                perror("execvp failed");
+                char error_message[50];
+                sprintf(error_message, "%s failed", args[0]);
+                perror(error_message);
                 exit(1);
             }
         } else {

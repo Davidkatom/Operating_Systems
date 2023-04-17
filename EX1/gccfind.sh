@@ -1,4 +1,5 @@
 #!/bin/bash
+#David Shnaiderov 209198308
 cd $1
 if [ "$#" -lt 2 ]; then
   echo "Not enough parameters"
