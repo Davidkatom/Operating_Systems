@@ -8,9 +8,3 @@ This repository contains two shell scripts to demonstrate basic functionalities 
 2. `tennis.sh` - A script to simulate a simple tennis game between two players.
 3. `myshell.c` - This is a custom shell implementation that supports basic commands like cd, exit, and a history command to display previously executed commands with their process IDs.
 
-## Usage
-
-### gccfind.sh
-
-```sh
-./gccfind.sh <directory> <search_string> [-r]
