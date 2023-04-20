@@ -82,15 +82,14 @@ int main(int argc, char *argv[]) {
         pid_t pid = fork();
         if (pid < 0) {
             char error_message[50];
-            perror("execvp failed");
 
-            sprintf(error_message, "%s failed", args[0]);
+            sprintf(error_message, "%s failed", "fork");
             perror(error_message);
             exit(1);
         } else if (pid == 0) {
             if (execvp(args[0], args) < 0) {
                 char error_message[50];
-                sprintf(error_message, "%s failed", args[0]);
+                sprintf(error_message, "%s failed", "exec");
                 perror(error_message);
                 exit(1);
             }
