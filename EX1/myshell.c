@@ -29,10 +29,12 @@ void display_history() {
 
 void add_to_path(const char *path) {
     char *current_path = getenv("PATH");
-    char *env_path = getenv("PATH");
-    char new_path[1000 + MAX_CMD_LENGTH];
-    sprintf(new_path, "PATH=%s:%s", path, current_path);
-    putenv(new_path);
+    char *new_path = malloc(2 + strlen(current_path) + strlen(path));
+    strcpy(new_path, current_path);
+    strcat(new_path, ":");
+    strcat(new_path, path);
+    setenv("PATH", new_path, 1);
+    free(new_path);
 }
 
 
@@ -53,12 +55,16 @@ int main(int argc, char *argv[]) {
         fgets(cmd, MAX_CMD_LENGTH, stdin);
         cmd[strcspn(cmd, "\n")] = '\0';
 
+	
         char *token = strtok(cmd, " ");
         int i = 0;
         while (token) {
             args[i++] = token;
             token = strtok(NULL, " ");
         }
+	if(i == 0){
+	    continue;
+	}
         args[i] = NULL;
 
         if (strcmp(args[0], "exit") == 0) {
