@@ -80,6 +80,8 @@ int main(int argc, char *argv[]) {
 
 
     while ((entry = readdir(folder)) != NULL) {
+        int exit_status = 0;
+
 
         if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
             char subfolder_path[1024];
@@ -91,8 +93,9 @@ int main(int argc, char *argv[]) {
             }
 
             pid_t pid = fork();
-
             if (pid == 0) {
+                int exit_s = 0;
+
 
                 FILE *input_fp = fopen(input_file, "r");
                 if (!input_fp) {
@@ -107,19 +110,30 @@ int main(int argc, char *argv[]) {
                     perror("Error opening output file\n");
                     exit(1);
                 }
+
+                FILE *errors_fp = fopen("errors.txt", "a");
+                if (!errors_fp) {
+                    perror("Error opening errors.txt");
+                    exit(1);
+                }
+                dup2(fileno(errors_fp), STDERR_FILENO);
+                fclose(errors_fp);
                 chdir(subfolder_path);
 
                 pid_t monitor_pid = fork();
                 if (monitor_pid > 0) {
                     int s;
-
                     signal(SIGALRM, alarm_handler);
                     alarm(TIMEOUT);
                     waitpid(monitor_pid, &s, 0);
-
+                    //if (WIFSIGNALED(s) && WTERMSIG(s) == SIGALRM) {
+                    //    compare_output = 0; // Set the flag to 0 in case of a timeout
+                    //}
                 } else {
 
+
                     char compile_command[1024];
+                    //TODO no printf
                     snprintf(compile_command, sizeof(compile_command), "gcc *.c -o program");
 
                     if (system(compile_command) == 0) {
@@ -129,26 +143,23 @@ int main(int argc, char *argv[]) {
                         execl("./program", "program", NULL);
                     } else {
                         perror("Error compiling C program\n");
+                        exit_status = 3; // Set the exit_status to 4 in case of a timeout
                         exit(3);
                     }
+
                 }
-                exit(1);
+                printf("status = %d", exit_status);
             } else if (pid < 0) {
                 perror("Error creating process");
             } else {
                 int status;
-                //  pause();
                 waitpid(pid, &status, 0);
 
                 if (WIFEXITED(status)) {
                     int exit_status = WEXITSTATUS(status);
+                    printf("exit status - %d\n", exit_status);
                     if (exit_status == 3) {
                         printf("Program in %s failed to compile\n", subfolder_path);
-                        continue; // Skip this iteration and move on to the next directory
-                    }
-                    if (exit_status == 4) {
-                        //TODO not working
-                        printf("Program in %s timed out\n", subfolder_path);
                         continue; // Skip this iteration and move on to the next directory
                     }
                 }
@@ -161,6 +172,8 @@ int main(int argc, char *argv[]) {
                 } else if (comp_pid < 0) {
                     perror("Error creating comp.out process");
                 } else {
+                    if(WIFEXITED(status) == 0)
+                        continue;
                     int comp_status;
                     waitpid(comp_pid, &comp_status, 0);
                     if (WIFEXITED(comp_status)) {
