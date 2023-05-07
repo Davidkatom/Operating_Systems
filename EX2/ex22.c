@@ -9,6 +9,28 @@
 
 #define TIMEOUT 5
 
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <dirent.h>
+
+void append_result(const char *name, int grade, const char *reason) {
+    // Check if results.csv exists
+    FILE *file = fopen("results.csv", "a");
+    if (!file) {
+        perror("Error opening/creating results.csv");
+        exit(1);
+    }
+
+    // Append the line to the CSV file
+    fprintf(file, "%s,%d,%s\n", name, grade, reason);
+
+    // Close the file
+    fclose(file);
+
+}
+
 // Timeout handler for the alarm signal
 void alarm_handler(int signo) {
     printf("Child process timed out - signal %d\n", signo);
@@ -84,7 +106,6 @@ int main(int argc, char *argv[]) {
 
             // Check if the subfolder contains a C source file
             if (contains_c_file(subfolder_path) == 0) {
-                printf("No C file\n");
                 continue;
             }
 
@@ -154,7 +175,13 @@ int main(int argc, char *argv[]) {
                 if (WIFEXITED(status)) {
                     int exit_status = WEXITSTATUS(status);
                     if (exit_status == 3) {
-                        printf("Program in %s failed to compile\n", subfolder_path);
+                        printf("No C file\n");
+                        append_result(entry->d_name, 10, "COMPILATION_ERROR");
+
+                        continue; // Skip this iteration and move on to the next directory
+                    }
+                    if (exit_status == 4) {
+                        append_result(entry->d_name, 20, "TIMEOUT");
                         continue; // Skip this iteration and move on to the next directory
                     }
                 }
@@ -175,10 +202,14 @@ int main(int argc, char *argv[]) {
                     if (WIFEXITED(comp_status)) {
                         int exit_status = WEXITSTATUS(comp_status);
                         if (exit_status == 1) {
+                            append_result(entry->d_name, 100, "EXCELLENT");
+
                             printf("Program in %s passed the test (identical output)\n", subfolder_path);
                         } else if (exit_status == 3) {
+                            append_result(entry->d_name, 75, "SIMILAR");
                             printf("Program in %s failed the test (similar output)\n", subfolder_path);
                         } else if (exit_status == 2) {
+                            append_result(entry->d_name, 100, "WRONG");
                             printf("Program in %s failed the test (different output)\n", subfolder_path);
                         } else {
                             printf("Program in %s: comp.out returned an unexpected exit status (%d)\n", subfolder_path,
