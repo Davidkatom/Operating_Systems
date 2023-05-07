@@ -43,7 +43,9 @@ int main(int argc, char *argv[]) {
         add_to_path(argv[i]);
     }
 
+    char cmdcopy[MAX_CMD_LENGTH];
     char cmd[MAX_CMD_LENGTH];
+
     char *args[MAX_CMD_LENGTH];
     int status;
 
@@ -53,8 +55,12 @@ int main(int argc, char *argv[]) {
         printf("$ ");
         fflush(stdout);
         fgets(cmd, MAX_CMD_LENGTH, stdin);
-        cmd[strcspn(cmd, "\n")] = '\0';
 
+	strcpy(cmdcopy,cmd);
+	cmdcopy[strcspn(cmdcopy, "\n")] = '\0';
+
+        cmd[strcspn(cmd, "\n")] = '\0';
+	
 	
         char *token = strtok(cmd, " ");
         int i = 0;
@@ -62,6 +68,7 @@ int main(int argc, char *argv[]) {
             args[i++] = token;
             token = strtok(NULL, " ");
         }
+	
 	if(i == 0){
 	    continue;
 	}
@@ -75,12 +82,12 @@ int main(int argc, char *argv[]) {
             if (chdir(args[1]) < 0) {
                 perror("cd failed");
             }
-            add_to_history(cmd, getpid()); // Add the command and PID to history in the parent process
+            add_to_history(cmdcopy, getpid()); // Add the command and PID to history in the parent process
             continue;
         }
 
         if (strcmp(args[0], "history") == 0) {
-            add_to_history(cmd, getpid()); // Add the command and PID to history in the parent process
+            add_to_history(cmdcopy, getpid()); // Add the command and PID to history in the parent process
             display_history();
             continue;
         }
@@ -100,7 +107,7 @@ int main(int argc, char *argv[]) {
                 exit(1);
             }
         } else {
-            add_to_history(cmd, pid); // Add the command and PID to history in the parent process
+            add_to_history(cmdcopy, pid); // Add the command and PID to history in the parent process
             waitpid(pid, &status, 0);
         }
     }

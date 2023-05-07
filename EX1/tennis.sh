@@ -48,10 +48,13 @@ while true; do
 
 	valid=0
 	while [ $valid -eq 0 ]; do
-	        read -s -p "PLAYER 1 PICK A NUMBER: " draw1
+		echo -n "PLAYER 1 PICK A NUMBER: "
+	        read -s draw1
 		if ! [[ $draw1 =~ ^[0-9]+$ ]]; then
+			echo
                         echo "NOT A VALID MOVE !"
 		elif [ $draw1 -gt $player1 ]; then
+			echo
 			echo "NOT A VALID MOVE !"		
 		else
 			valid=1
@@ -60,10 +63,13 @@ while true; do
 	echo
  	valid=0
         while [ $valid -eq 0 ]; do
-                read -s -p "PLAYER 2 PICK A NUMBER: " draw2
+		echo -n "PLAYER 2 PICK A NUMBER: "
+                read -s draw2
                 if ! [[ $draw2 =~ ^[0-9]+$ ]]; then
+			echo
                         echo "NOT A VALID MOVE !"
                 elif [ $draw2 -gt $player2 ]; then
+			echo
                         echo "NOT A VALID MOVE !"
                 else
                         valid=1
@@ -106,7 +112,7 @@ while true; do
 			echo "PLAYER 1 WINS !"
 			exit
 		else 
-			"IT'S A DRAW !"
+			echo "IT'S A DRAW !"
                 	exit
 		fi
 
