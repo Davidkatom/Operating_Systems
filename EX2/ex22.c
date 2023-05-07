@@ -7,11 +7,12 @@
 #include <unistd.h>
 #include <errno.h>
 
-#define TIMEOUT 20
+#define TIMEOUT 5
 
-void alarm_handler(int signum) {
-    printf("Child process timed out\n");
-    exit(1);
+void alarm_handler(int signo) {
+    printf("Child process timed out - singal %d\n", signo);
+    //killpg(getpid(), SIGKILL);
+    exit(4);
 }
 
 int contains_c_file(const char *folder_path) {
@@ -50,11 +51,6 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    FILE *output_fp = fopen("temp_output.txt", "w");
-    if (!output_fp) {
-        perror("Error opening output file\n");
-        exit(1);
-    }
 
     char folder_path[1024], input_file[1024], correct_output_file[1024];
     fgets(folder_path, sizeof(folder_path), config_file);
@@ -79,51 +75,83 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    FILE *input_fp = fopen(input_file, "r");
-    if (!input_fp) {
-        fprintf(stderr, "Error opening input file (%s): %s\n", input_file, strerror(errno));
-        exit(1);
-    }
 
     struct dirent *entry;
+
+
     while ((entry = readdir(folder)) != NULL) {
+
         if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
             char subfolder_path[1024];
             snprintf(subfolder_path, sizeof(subfolder_path), "%.254s/%.254s", folder_path, entry->d_name);
-            printf("%s\n\n\n\n\n",subfolder_path);
-            if(contains_c_file(subfolder_path) == 0){
+            printf("%s\n\n\n\n\n", subfolder_path);
+            if (contains_c_file(subfolder_path) == 0) {
                 printf("No C file\n");
                 continue;
             }
+
             pid_t pid = fork();
+
             if (pid == 0) {
+
+                FILE *input_fp = fopen(input_file, "r");
+                if (!input_fp) {
+                    fprintf(stderr, "Error opening input file (%s): %s\n", input_file, strerror(errno));
+                    exit(1);
+                }
+                dup2(fileno(input_fp), STDIN_FILENO);
+                fclose(input_fp);
+
+                FILE *output_fp = fopen("temp_output.txt", "w");
+                if (!output_fp) {
+                    perror("Error opening output file\n");
+                    exit(1);
+                }
                 chdir(subfolder_path);
 
-                signal(SIGALRM, alarm_handler);
-                alarm(TIMEOUT);
+                pid_t monitor_pid = fork();
+                if (monitor_pid > 0) {
+                    int s;
 
-//                char cwd[PATH_MAX];
-//                if (getcwd(cwd, sizeof(cwd)) != NULL)
-//                    printf("Current working dir: %s\n", cwd);
+                    signal(SIGALRM, alarm_handler);
+                    alarm(TIMEOUT);
+                    waitpid(monitor_pid, &s, 0);
 
-                char compile_command[1024];
-                snprintf(compile_command, sizeof(compile_command), "gcc *.c -o program");
-
-                if (system(compile_command) == 0) {
-                    dup2(fileno(output_fp), STDOUT_FILENO);
-                    fclose(output_fp);
-
-                    execl("./program", "program", NULL);
                 } else {
-                    perror("Error compiling C program\n");
-                }
 
+                    char compile_command[1024];
+                    snprintf(compile_command, sizeof(compile_command), "gcc *.c -o program");
+
+                    if (system(compile_command) == 0) {
+                        dup2(fileno(output_fp), STDOUT_FILENO);
+                        fclose(output_fp);
+
+                        execl("./program", "program", NULL);
+                    } else {
+                        perror("Error compiling C program\n");
+                        exit(3);
+                    }
+                }
                 exit(1);
             } else if (pid < 0) {
                 perror("Error creating process");
             } else {
                 int status;
+                //  pause();
                 waitpid(pid, &status, 0);
+
+                if (WIFEXITED(status)) {
+                    int exit_status = WEXITSTATUS(status);
+                    if (exit_status == 3) {
+                        printf("Program in %s failed to compile\n", subfolder_path);
+                        continue; // Skip this iteration and move on to the next directory
+                    }
+                    if (exit_status == 4) {
+                        //TODO not working
+                        printf("Program in %s timed out\n", subfolder_path);
+                        continue; // Skip this iteration and move on to the next directory
+                    }
+                }
 
                 pid_t comp_pid = fork();
                 if (comp_pid == 0) {
@@ -144,7 +172,8 @@ int main(int argc, char *argv[]) {
                         } else if (exit_status == 2) {
                             printf("Program in %s failed the test (different output)\n", subfolder_path);
                         } else {
-                            printf("Program in %s: comp.out returned an unexpected exit status (%d)\n", subfolder_path, exit_status);
+                            printf("Program in %s: comp.out returned an unexpected exit status (%d)\n", subfolder_path,
+                                   exit_status);
                         }
                     }
                 }

@@ -24,12 +24,10 @@ int compare_files(FILE *file1, FILE *file2) {
 
     // Check if any file has reached EOF and the other file still has characters to read.
     // If so, continue skipping whitespaces for the remaining file.
-    while (ch1 != EOF && isspace(ch1)) {
-        ch1 = fgetc(file1);
-    }
-    while (ch2 != EOF && isspace(ch2)) {
-        ch2 = fgetc(file2);
-    }
+    if(ch1 != EOF && isspace(ch1))
+        return 3;
+    if(ch2 != EOF && isspace(ch2))
+        return 3;
 
     if (identical) return 1;
     if (similar && (ch1 == EOF) && (ch2 == EOF)) return 3;
