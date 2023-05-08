@@ -203,7 +203,6 @@ int main(int argc, char *argv[]) {
                     concat_strings(compile_command, sizeof(compile_command), full_c_file_path);
                     concat_strings(compile_command, sizeof(compile_command), " -o program");
 
-                    printf("compile command = %d\n",system(compile_command));
                     if (system(compile_command) == 0) {
                         dup2(output_fd, STDOUT_FILENO);
 
@@ -217,6 +216,7 @@ int main(int argc, char *argv[]) {
                 }
                 int status;
                 waitpid(monitor_pid, &status, 0);
+                printf("status = %d\n", WEXITSTATUS(status));
                 exit(WEXITSTATUS(status));
             } else if (pid < 0) {
                 //perror("Error creating process");
