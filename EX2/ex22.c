@@ -20,7 +20,7 @@ void append_result(const char *name, int grade, const char *reason) {
     // Check if results.csv exists
     int file_fd = open("results.csv", O_WRONLY | O_CREAT | O_APPEND, 0644);
     if (file_fd == -1) {
-        perror("Error opening/creating results.csv");
+        perror("Error in: open");
         exit(1);
     }
 
@@ -28,7 +28,6 @@ void append_result(const char *name, int grade, const char *reason) {
     char buffer[1024];
     int length = snprintf(buffer, sizeof(buffer), "%s,%d,%s\n", name, grade, reason);
     if (length < 0) {
-        perror("Error formatting CSV entry");
         close(file_fd);
         exit(1);
     }
@@ -69,29 +68,25 @@ char *contains_c_file(const char *folder_path, char *c_file, size_t c_file_size)
 }
 
 int main(int argc, char *argv[]) {
+    int original_stderr_fd = dup(STDERR_FILENO);
+
     // Check for correct number of arguments
     if (argc != 2) {
         //printf("Usage: %s <configuration_file>\n", argv[0]);
         return 1;
     }
-    int errors_fd = open("errors.txt", O_WRONLY | O_CREAT | O_APPEND, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-    if (errors_fd == -1) {
-        perror("Error in: open\n");
-        exit(1);
-    }
-    dup2(errors_fd, STDERR_FILENO);
-    close(errors_fd);
+
 
     int config_fd = open(argv[1], O_RDONLY);
     if (config_fd == -1) {
         perror("Error in: open\n");
-        return 1;
+        exit(1);
     }
 
     char buffer[4096];
     ssize_t read_len = read(config_fd, buffer, sizeof(buffer) - 1);
     if (read_len <= 0) {
-        perror("Error reading configuration file\n");
+        //perror("Not a valid directory\n");
         close(config_fd);
         return 1;
     }
@@ -106,8 +101,8 @@ int main(int argc, char *argv[]) {
         strncpy(folder_path, token, sizeof(folder_path) - 1);
         folder_path[sizeof(folder_path) - 1] = '\0';
     } else {
-        perror("Error extracting folder_path\n");
-        return 1;
+        perror("Not a valid directory\n");
+        exit(1);
     }
 
     token = strtok(NULL, "\n");
@@ -115,8 +110,8 @@ int main(int argc, char *argv[]) {
         strncpy(input_file, token, sizeof(input_file) - 1);
         input_file[sizeof(input_file) - 1] = '\0';
     } else {
-        perror("Error extracting input_file\n");
-        return 1;
+        perror("Input file not exist\n");
+        exit(1);
     }
 
     token = strtok(NULL, "\n");
@@ -124,17 +119,30 @@ int main(int argc, char *argv[]) {
         strncpy(correct_output_file, token, sizeof(correct_output_file) - 1);
         correct_output_file[sizeof(correct_output_file) - 1] = '\0';
     } else {
-        perror("Error extracting correct_output_file\n");
-        return 1;
+        perror("Output file not exist\n");
+        exit(1);
+    }
+    //check if they exist
+    int input_fd = open(input_file, O_RDONLY);
+    if (input_fd == -1) {
+        perror("Input file not exist\n");
+        exit(1);
+    }
+    //dup2(input_fd, STDIN_FILENO);
+    //close(input_fd);
+
+    int output_fd = open("temp_output.txt", O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    if (output_fd == -1) {
+        perror("Output file not exist\n");
+        exit(1);
     }
 
     // Open the main folder
     DIR *folder = opendir(folder_path);
     if (!folder) {
         //perror("Error opening folder\n");
-        perror("Error in: open");
-
-        return 1;
+        perror("Not a valid directory\n");
+        exit(1);
     }
 
     struct dirent *entry;
@@ -161,7 +169,7 @@ int main(int argc, char *argv[]) {
                 // Redirect input, output, and error streams
                 int input_fd = open(input_file, O_RDONLY);
                 if (input_fd == -1) {
-                    perror("Error in: open");
+                    perror("Input file not exist\n");
                     exit(1);
                 }
                 dup2(input_fd, STDIN_FILENO);
@@ -169,9 +177,10 @@ int main(int argc, char *argv[]) {
 
                 int output_fd = open("temp_output.txt", O_WRONLY | O_CREAT | O_TRUNC, 0644);
                 if (output_fd == -1) {
-                    perror("Error in: open");
+                    perror("Output file not exist\n");
                     exit(1);
                 }
+
 
                 //chdir(subfolder_path);
 
@@ -189,6 +198,15 @@ int main(int argc, char *argv[]) {
                     }
 
                 } else {
+                    //redirect to error.txt
+                    int errors_fd = open("errors.txt", O_WRONLY | O_CREAT | O_APPEND, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+                    if (errors_fd == -1) {
+                        perror("Error in: open\n");
+                        exit(1);
+                    }
+                    dup2(errors_fd, STDERR_FILENO);
+                    close(errors_fd);
+
                     // Monitor process
                     //char compile_command[1024];
                     char compile_command[1024] = "gcc ";
