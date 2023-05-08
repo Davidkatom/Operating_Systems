@@ -45,12 +45,12 @@ void alarm_handler(int signo) {
 
 // Checks if the given folder contains a C source file
 char *contains_c_file(const char *folder_path, char *c_file, size_t c_file_size) {
+    printf("checking if there is c file in %s\n:", folder_path);
     DIR *folder = opendir(folder_path);
     if (!folder) {
         perror("Error in: opendir");
         return NULL;
     }
-    printf("checking if there is c file in %s\n:", folder_path);
 
     struct dirent *entry;
     char *c_file_found = NULL;
