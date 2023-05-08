@@ -7,8 +7,7 @@
 #include <fcntl.h>
 
 //TODO change execl to execvp
-//TODO remove program after launch
-//TODO check if errors are in file
+//TODO change sprintf
 #define TIMEOUT 5
 
 void append_result(const char *name, int grade, const char *reason) {
@@ -142,6 +141,7 @@ int main(int argc, char *argv[]) {
 
             // Check if the subfolder contains a C source file
             if (contains_c_file(subfolder_path) == 0) {
+                append_result(entry->d_name, 0, "NO_C_FILE");
                 continue;
             }
 
@@ -184,17 +184,16 @@ int main(int argc, char *argv[]) {
                 } else {
                     // Monitor process
                     char compile_command[1024];
-                    snprintf(compile_command, sizeof(compile_command), "gcc *.c -o program");
+                    //TODO change sprintf
+                    //snprintf(compile_command, sizeof(compile_command), "gcc *.c -o program");
 
-                    if (system(compile_command) == 0) {
+                    if (system("gcc *.c -o program") == 0) {
                         dup2(output_fd, STDOUT_FILENO);
 
                         close(output_fd);
 
                         execl("./program", "program", NULL);
                     } else {
-                        //perror("Error compiling C program\n");
-                        append_result(entry->d_name, 10, "NO_C_FILE");
                         exit(3);
                     }
                 }
@@ -213,8 +212,7 @@ int main(int argc, char *argv[]) {
                 if (WIFEXITED(status)) {
                     int exit_status = WEXITSTATUS(status);
                     if (exit_status == 3) {
-                        //printf("No C file\n");
-                        //append_result(entry->d_name, 10, "NO_C_FILE");
+                        append_result(entry->d_name, 10, "COMPILATION_ERROR");
 
                         continue; // Skip this iteration and move on to the next directory
                     }
@@ -227,8 +225,9 @@ int main(int argc, char *argv[]) {
                 pid_t comp_pid = fork();
                 if (comp_pid == 0) {
                     // Child process to execute comp.out
-                    execl("./comp.out", "comp.out", "temp_output.txt", correct_output_file, NULL);
-                    //perror("Error executing comp.out");
+                    //execl("./comp.out", "comp.out", "temp_output.txt", correct_output_file, NULL);
+                    char *exargv[] = {"comp.out", "temp_output.txt", correct_output_file, NULL};
+                    execvp("./comp.out", exargv);
                     perror("Error in: execvp");
                     exit(1);
                 } else if (comp_pid < 0) {
