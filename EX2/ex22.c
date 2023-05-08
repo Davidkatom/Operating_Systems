@@ -50,6 +50,7 @@ char *contains_c_file(const char *folder_path, char *c_file, size_t c_file_size)
         perror("Error in: opendir");
         return NULL;
     }
+    printf("checking if there is c file in %s\n:", folder_path);
 
     struct dirent *entry;
     char *c_file_found = NULL;
