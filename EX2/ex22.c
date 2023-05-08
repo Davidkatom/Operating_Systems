@@ -2,24 +2,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
-#include <errno.h>
-
-#define TIMEOUT 5
-
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <dirent.h>
 #include <fcntl.h>
 
-//TODO not allowed to use fclose
 //TODO change execl to execvp
 //TODO remove program after launch
 //TODO check if errors are in file
+#define TIMEOUT 5
+
 void append_result(const char *name, int grade, const char *reason) {
     // Check if results.csv exists
     int file_fd = open("results.csv", O_WRONLY | O_CREAT | O_APPEND, 0644);
@@ -185,6 +176,13 @@ int main(int argc, char *argv[]) {
                     signal(SIGALRM, alarm_handler);
                     alarm(TIMEOUT);
                     waitpid(monitor_pid, &s, 0);
+                    if (access("program", F_OK) != -1) {
+                        // File "program" exists, delete it
+                        if (remove("program") != 0) {
+                            perror("Error in: remove");
+                        }
+                    }
+
                 } else {
                     // Monitor process
                     char compile_command[1024];
@@ -198,6 +196,7 @@ int main(int argc, char *argv[]) {
                         execl("./program", "program", NULL);
                     } else {
                         //perror("Error compiling C program\n");
+                        append_result(entry->d_name, 10, "NO_C_FILE");
                         exit(3);
                     }
                 }
@@ -217,7 +216,7 @@ int main(int argc, char *argv[]) {
                     int exit_status = WEXITSTATUS(status);
                     if (exit_status == 3) {
                         //printf("No C file\n");
-                        append_result(entry->d_name, 10, "COMPILATION_ERROR");
+                        //append_result(entry->d_name, 10, "NO_C_FILE");
 
                         continue; // Skip this iteration and move on to the next directory
                     }
@@ -249,7 +248,7 @@ int main(int argc, char *argv[]) {
                         } else if (exit_status == 3) {
                             append_result(entry->d_name, 75, "SIMILAR");
                         } else if (exit_status == 2) {
-                            append_result(entry->d_name, 100, "WRONG");
+                            append_result(entry->d_name, 50, "WRONG");
                         } else {
                             exit(1);
                         }

@@ -1,57 +1,72 @@
-#include <stdio.h>
+#include <fcntl.h>
+#include <unistd.h>
 #include <ctype.h>
+#include <stdio.h>
 
-int compare_files(FILE *file1, FILE *file2) {
-    int ch1, ch2;
+
+int compare_files(int fd1, int fd2) {
+    char ch1, ch2;
     int identical = 1;
-    int similar = 1;
+    char buf1, buf2;
 
-    while ((ch1 = fgetc(file1)) != EOF && (ch2 = fgetc(file2)) != EOF) {
+    while (read(fd1, &buf1, 1) > 0 && read(fd2, &buf2, 1) > 0) {
+        ch1 = buf1;
+        ch2 = buf2;
         if (ch1 != ch2) {
             identical = 0;
-            while(isspace(ch1)){
-                ch1 = fgetc(file1);
+            while (isspace(ch1)) {
+                read(fd1, &buf1, 1);
+                ch1 = buf1;
             }
-            while(isspace(ch2)){
-                ch2 = fgetc(file2);
+            while (isspace(ch2)) {
+                read(fd2, &buf2, 1);
+                ch2 = buf2;
             }
-            if (tolower(ch1) != tolower(ch2)){
-                similar = 0;
-                break;
+            if (tolower(ch1) != tolower(ch2)) {
+                return 2;
             }
         }
     }
-
-    // Check if any file has reached EOF and the other file still has characters to read.
-    // If so, continue skipping whitespaces for the remaining file.
-    if(ch1 != EOF && isspace(ch1))
-        return 3;
-    if(ch2 != EOF && isspace(ch2))
-        return 3;
+    while(read(fd1, &buf1, 1)>0) {
+        if(isspace(buf1))
+            continue;
+        ch1 = buf1;
+        if (ch1 != ch2)
+            identical = 0;
+        if (tolower(ch1) != tolower(ch2))
+            return 2;
+    }
+    while(read(fd2, &buf2, 1)>0) {
+        if(isspace(buf2))
+            continue;
+        ch2 = buf2;
+        if (ch1 != ch2)
+            identical = 0;
+        if (tolower(ch1) != tolower(ch2))
+            return 2;
+    }
 
     if (identical) return 1;
-    if (similar && (ch1 == EOF) && (ch2 == EOF)) return 3;
-    return 2;
+    return 3;
 }
 
 int main(int argc, char *argv[]) {
     if (argc != 3) {
-        printf("Usage: %s <file1> <file2>\n", argv[0]);
         return 1;
     }
 
-    FILE *file1 = fopen(argv[1], "r");
-    FILE *file2 = fopen(argv[2], "r");
+    int fd1 = open(argv[1], O_RDONLY);
+    int fd2 = open(argv[2], O_RDONLY);
 
-    if (!file1 || !file2) {
-        perror("Error opening file");
+    if (fd1 == -1 || fd2 == -1) {
+        perror("Error in: open");
         return 1;
     }
 
-    int result = compare_files(file1, file2);
+    int result = compare_files(fd1, fd2);
 
-    fclose(file1);
-    fclose(file2);
+    close(fd1);
+    close(fd2);
 
     return result;
 }
