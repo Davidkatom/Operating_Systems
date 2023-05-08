@@ -147,6 +147,7 @@ int main(int argc, char *argv[]) {
             snprintf(subfolder_path, sizeof(subfolder_path), "%.254s/%.254s", folder_path, entry->d_name);
 
             // Check if the subfolder contains a C source file
+            printf("entry = %s:\n",entry->d_name);
             char c_file_name[1024];
             if (contains_c_file(subfolder_path, c_file_name, sizeof(c_file_name)) == NULL) {
                 append_result(entry->d_name, 0, "NO_C_FILE");
