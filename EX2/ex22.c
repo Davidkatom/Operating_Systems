@@ -45,7 +45,6 @@ void alarm_handler(int signo) {
 
 // Checks if the given folder contains a C source file
 char *contains_c_file(const char *folder_path, char *c_file, size_t c_file_size) {
-    printf("checking if there is c file in %s\n:", folder_path);
     DIR *folder = opendir(folder_path);
     if (!folder) {
         perror("Error in: opendir");
@@ -147,11 +146,10 @@ int main(int argc, char *argv[]) {
             snprintf(subfolder_path, sizeof(subfolder_path), "%.254s/%.254s", folder_path, entry->d_name);
 
             // Check if the subfolder contains a C source file
-            printf("checking %s\n",entry->d_name);
+            //printf("checking %s\n",entry->d_name);
             char c_file_name[1024];
             if (contains_c_file(subfolder_path, c_file_name, sizeof(c_file_name)) == NULL) {
                 append_result(entry->d_name, 0, "NO_C_FILE");
-                printf("No c file");
                 continue;
             }
 
@@ -205,9 +203,7 @@ int main(int argc, char *argv[]) {
 
                     if (system(compile_command) == 0) {
                         dup2(output_fd, STDOUT_FILENO);
-
                         close(output_fd);
-
                         char *exec_argv[] = {"program", NULL};
                         execvp("./program", exec_argv);
                     } else {
