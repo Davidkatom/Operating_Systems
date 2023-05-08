@@ -136,8 +136,6 @@ int main(int argc, char *argv[]) {
 
     // Iterate through the subfolders
     while ((entry = readdir(folder)) != NULL) {
-        int exit_status = 0;
-
         if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
             char subfolder_path[1024];
             snprintf(subfolder_path, sizeof(subfolder_path), "%.254s/%.254s", folder_path, entry->d_name);
@@ -242,12 +240,13 @@ int main(int argc, char *argv[]) {
                     waitpid(comp_pid, &comp_status, 0);
 
                     if (WIFEXITED(comp_status)) {
-                        int exit_status = WEXITSTATUS(comp_status);
-                        if (exit_status == 1) {
+                        int comp = WEXITSTATUS(comp_status);
+                        //printf("exit status - %d\n",comp);
+                        if (comp == 1) {
                             append_result(entry->d_name, 100, "EXCELLENT");
-                        } else if (exit_status == 3) {
+                        } else if (comp == 3) {
                             append_result(entry->d_name, 75, "SIMILAR");
-                        } else if (exit_status == 2) {
+                        } else if (comp == 2) {
                             append_result(entry->d_name, 50, "WRONG");
                         } else {
                             exit(1);

@@ -8,8 +8,12 @@ int compare_files(int fd1, int fd2) {
     char ch1, ch2;
     int identical = 1;
     char buf1, buf2;
-
-    while (read(fd1, &buf1, 1) > 0 && read(fd2, &buf2, 1) > 0) {
+    int read1, read2;
+    while (1) {
+        read1 = read(fd1, &buf1, 1);
+        read2 = read(fd2, &buf2, 1);
+        if(read1 <= 0 || read2 <= 0)
+            break;
         ch1 = buf1;
         ch2 = buf2;
         if (ch1 != ch2) {
@@ -27,24 +31,35 @@ int compare_files(int fd1, int fd2) {
             }
         }
     }
-    while(read(fd1, &buf1, 1)>0) {
-        if(isspace(buf1))
+
+    if(read1 == read2){
+        if(identical) return 1;
+        return 3;
+    }
+
+    do {
+        if (isspace(buf1)) {
+            identical = 0;
             continue;
+        }
         ch1 = buf1;
         if (ch1 != ch2)
             identical = 0;
         if (tolower(ch1) != tolower(ch2))
             return 2;
-    }
-    while(read(fd2, &buf2, 1)>0) {
-        if(isspace(buf2))
+    } while ((read(fd1, &buf1, 1) > 0));
+
+    do {
+        if (isspace(buf2)) {
+            identical = 0;
             continue;
+        }
         ch2 = buf2;
         if (ch1 != ch2)
             identical = 0;
         if (tolower(ch1) != tolower(ch2))
             return 2;
-    }
+    } while (read(fd2, &buf2, 1) > 0);
 
     if (identical) return 1;
     return 3;
