@@ -14,26 +14,36 @@
 #include <stdlib.h>
 #include <string.h>
 #include <dirent.h>
+#include <fcntl.h>
 
+//TODO not allowed to use fclose
+//TODO change execl to execvp
+//TODO remove program after launch
+//TODO check if errors are in file
 void append_result(const char *name, int grade, const char *reason) {
     // Check if results.csv exists
-    FILE *file = fopen("results.csv", "a");
-    if (!file) {
+    int file_fd = open("results.csv", O_WRONLY | O_CREAT | O_APPEND, 0644);
+    if (file_fd == -1) {
         perror("Error opening/creating results.csv");
         exit(1);
     }
 
     // Append the line to the CSV file
-    fprintf(file, "%s,%d,%s\n", name, grade, reason);
+    char buffer[1024];
+    int length = snprintf(buffer, sizeof(buffer), "%s,%d,%s\n", name, grade, reason);
+    if (length < 0) {
+        perror("Error formatting CSV entry");
+        close(file_fd);
+        exit(1);
+    }
+    write(file_fd, buffer, length);
 
     // Close the file
-    fclose(file);
-
+    close(file_fd);
 }
-
 // Timeout handler for the alarm signal
 void alarm_handler(int signo) {
-    printf("Child process timed out - signal %d\n", signo);
+    //printf("Child process timed out - signal %d\n", signo);
     exit(4);
 }
 
@@ -41,7 +51,8 @@ void alarm_handler(int signo) {
 int contains_c_file(const char *folder_path) {
     DIR *folder = opendir(folder_path);
     if (!folder) {
-        fprintf(stderr, "Error opening folder (%s): %s\n", folder_path, strerror(errno));
+        //fprintf(stderr, "Error opening folder (%s): %s\n", folder_path, strerror(errno));
+        perror("Error in: opendir");
         return 0;
     }
 
@@ -64,33 +75,69 @@ int contains_c_file(const char *folder_path) {
 int main(int argc, char *argv[]) {
     // Check for correct number of arguments
     if (argc != 2) {
-        printf("Usage: %s <configuration_file>\n", argv[0]);
+        //printf("Usage: %s <configuration_file>\n", argv[0]);
+        return 1;
+    }
+    int errors_fd = open("errors.txt", O_WRONLY | O_CREAT | O_APPEND, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+    if (errors_fd == -1) {
+        perror("Error in: open\n");
+        exit(1);
+    }
+    dup2(errors_fd, STDERR_FILENO);
+    close(errors_fd);
+
+    int config_fd = open(argv[1], O_RDONLY);
+    if (config_fd == -1) {
+        perror("Error in: open\n");
         return 1;
     }
 
-    // Open and read configuration file
-    FILE *config_file = fopen(argv[1], "r");
-    if (!config_file) {
-        perror("Error opening configuration file\n");
+    char buffer[4096];
+    ssize_t read_len = read(config_fd, buffer, sizeof(buffer) - 1);
+    if (read_len <= 0) {
+        perror("Error reading configuration file\n");
+        close(config_fd);
         return 1;
     }
+    buffer[read_len] = '\0'; // Null terminate the string
+
+    close(config_fd);
 
     char folder_path[1024], input_file[1024], correct_output_file[1024];
-    fgets(folder_path, sizeof(folder_path), config_file);
-    folder_path[strcspn(folder_path, "\n")] = 0;
 
-    fgets(input_file, sizeof(input_file), config_file);
-    input_file[strcspn(input_file, "\n")] = 0;
+    char *token = strtok(buffer, "\n");
+    if (token) {
+        strncpy(folder_path, token, sizeof(folder_path) - 1);
+        folder_path[sizeof(folder_path) - 1] = '\0';
+    } else {
+        perror("Error extracting folder_path\n");
+        return 1;
+    }
 
-    fgets(correct_output_file, sizeof(correct_output_file), config_file);
-    correct_output_file[strcspn(correct_output_file, "\n")] = 0;
+    token = strtok(NULL, "\n");
+    if (token) {
+        strncpy(input_file, token, sizeof(input_file) - 1);
+        input_file[sizeof(input_file) - 1] = '\0';
+    } else {
+        perror("Error extracting input_file\n");
+        return 1;
+    }
 
-    fclose(config_file);
+    token = strtok(NULL, "\n");
+    if (token) {
+        strncpy(correct_output_file, token, sizeof(correct_output_file) - 1);
+        correct_output_file[sizeof(correct_output_file) - 1] = '\0';
+    } else {
+        perror("Error extracting correct_output_file\n");
+        return 1;
+    }
 
     // Open the main folder
     DIR *folder = opendir(folder_path);
     if (!folder) {
-        perror("Error opening folder\n");
+        //perror("Error opening folder\n");
+        perror("Error in: open");
+
         return 1;
     }
 
@@ -115,30 +162,21 @@ int main(int argc, char *argv[]) {
             if (pid == 0) {
                 // Child process
                 // Redirect input, output, and error streams
-                FILE *input_fp = fopen(input_file, "r");
-                if (!input_fp) {
-                    fprintf(stderr, "Error opening input file (%s): %s\n", input_file, strerror(errno));
+                int input_fd = open(input_file, O_RDONLY);
+                if (input_fd == -1) {
+                    perror("Error in: open");
                     exit(1);
                 }
-                dup2(fileno(input_fp), STDIN_FILENO);
-                fclose(input_fp);
+                dup2(input_fd, STDIN_FILENO);
+                close(input_fd);
 
-                FILE *output_fp = fopen("temp_output.txt", "w");
-                if (!output_fp) {
-                    perror("Error opening output file\n");
+                int output_fd = open("temp_output.txt", O_WRONLY | O_CREAT | O_TRUNC, 0644);
+                if (output_fd == -1) {
+                    perror("Error in: open");
                     exit(1);
                 }
 
-                FILE *errors_fp = fopen("errors.txt", "a");
-                if (!errors_fp) {
-                    perror("Error opening errors.txt");
-                    exit(1);
-                }
-                dup2(fileno(errors_fp), STDERR_FILENO);
-                fclose(errors_fp);
                 chdir(subfolder_path);
-
-                printf("\n\n\n\n%s\n", subfolder_path);
 
                 pid_t monitor_pid = fork();
                 if (monitor_pid > 0) {
@@ -153,12 +191,13 @@ int main(int argc, char *argv[]) {
                     snprintf(compile_command, sizeof(compile_command), "gcc *.c -o program");
 
                     if (system(compile_command) == 0) {
-                        dup2(fileno(output_fp), STDOUT_FILENO);
-                        fclose(output_fp);
+                        dup2(output_fd, STDOUT_FILENO);
+
+                        close(output_fd);
 
                         execl("./program", "program", NULL);
                     } else {
-                        perror("Error compiling C program\n");
+                        //perror("Error compiling C program\n");
                         exit(3);
                     }
                 }
@@ -166,7 +205,9 @@ int main(int argc, char *argv[]) {
                 waitpid(monitor_pid, &status, 0);
                 exit(WEXITSTATUS(status));
             } else if (pid < 0) {
-                perror("Error creating process");
+                //perror("Error creating process");
+                perror("Error in: fork");
+
             } else {
                 // Parent process
                 int status;
@@ -175,7 +216,7 @@ int main(int argc, char *argv[]) {
                 if (WIFEXITED(status)) {
                     int exit_status = WEXITSTATUS(status);
                     if (exit_status == 3) {
-                        printf("No C file\n");
+                        //printf("No C file\n");
                         append_result(entry->d_name, 10, "COMPILATION_ERROR");
 
                         continue; // Skip this iteration and move on to the next directory
@@ -190,10 +231,12 @@ int main(int argc, char *argv[]) {
                 if (comp_pid == 0) {
                     // Child process to execute comp.out
                     execl("./comp.out", "comp.out", "temp_output.txt", correct_output_file, NULL);
-                    perror("Error executing comp.out");
+                    //perror("Error executing comp.out");
+                    perror("Error in: execvp");
                     exit(1);
                 } else if (comp_pid < 0) {
-                    perror("Error creating comp.out process");
+                    //perror("Error creating comp.out process");
+                    perror("Error in: fork");
                 } else {
                     // Parent process for comp.out
                     int comp_status;
@@ -203,17 +246,12 @@ int main(int argc, char *argv[]) {
                         int exit_status = WEXITSTATUS(comp_status);
                         if (exit_status == 1) {
                             append_result(entry->d_name, 100, "EXCELLENT");
-
-                            printf("Program in %s passed the test (identical output)\n", subfolder_path);
                         } else if (exit_status == 3) {
                             append_result(entry->d_name, 75, "SIMILAR");
-                            printf("Program in %s failed the test (similar output)\n", subfolder_path);
                         } else if (exit_status == 2) {
                             append_result(entry->d_name, 100, "WRONG");
-                            printf("Program in %s failed the test (different output)\n", subfolder_path);
                         } else {
-                            printf("Program in %s: comp.out returned an unexpected exit status (%d)\n", subfolder_path,
-                                   exit_status);
+                            exit(1);
                         }
                     }
                 }
