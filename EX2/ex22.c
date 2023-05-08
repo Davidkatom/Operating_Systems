@@ -203,13 +203,12 @@ int main(int argc, char *argv[]) {
                     concat_strings(compile_command, sizeof(compile_command), full_c_file_path);
                     concat_strings(compile_command, sizeof(compile_command), " -o program");
 
+                    printf("compile command = &d\n",system(compile_command) == 0);
                     if (system(compile_command) == 0) {
                         dup2(output_fd, STDOUT_FILENO);
 
                         close(output_fd);
 
-                        //TODO change to execvp
-                        //  execl("./program", "program", NULL);
                         char *exec_argv[] = {"program", NULL};
                         execvp("./program", exec_argv);
                     } else {
@@ -230,7 +229,7 @@ int main(int argc, char *argv[]) {
 
                 if (WIFEXITED(status)) {
                     int exit_status = WEXITSTATUS(status);
-                    printf("exit status - %d", exit_status);
+                    printf("exit status - %d\n", exit_status);
                     if (exit_status == 3) {
                         append_result(entry->d_name, 10, "COMPILATION_ERROR");
 
