@@ -149,6 +149,7 @@ int main(int argc, char *argv[]) {
             char c_file_name[1024];
             if (contains_c_file(subfolder_path, c_file_name, sizeof(c_file_name)) == NULL) {
                 append_result(entry->d_name, 0, "NO_C_FILE");
+                printf("No c file");
                 continue;
             }
 
