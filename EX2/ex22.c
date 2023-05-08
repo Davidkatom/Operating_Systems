@@ -182,7 +182,7 @@ int main(int argc, char *argv[]) {
                     int s;
                     signal(SIGALRM, alarm_handler);
                     alarm(TIMEOUT);
-                    waitpid(monitor_pid, &s, 0);
+                    //waitpid(monitor_pid, &s, 0);
                     if (access("program", F_OK) != -1) {
                         // File "program" exists, delete it
                         if (remove("program") != 0) {
