@@ -6,9 +6,15 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-//TODO change execl to execvp
-//TODO change sprintf
 #define TIMEOUT 5
+
+void concat_strings(char *dest, size_t dest_size, const char *src) {
+    size_t dest_len = strlen(dest);
+    size_t src_len = strlen(src);
+    size_t to_copy = (dest_size > dest_len + src_len) ? src_len : (dest_size - dest_len - 1);
+    strncpy(dest + dest_len, src, to_copy);
+    dest[dest_len + to_copy] = '\0';
+}
 
 void append_result(const char *name, int grade, const char *reason) {
     // Check if results.csv exists
@@ -38,21 +44,21 @@ void alarm_handler(int signo) {
 }
 
 // Checks if the given folder contains a C source file
-int contains_c_file(const char *folder_path) {
+char *contains_c_file(const char *folder_path, char *c_file, size_t c_file_size) {
     DIR *folder = opendir(folder_path);
     if (!folder) {
-        //fprintf(stderr, "Error opening folder (%s): %s\n", folder_path, strerror(errno));
         perror("Error in: opendir");
-        return 0;
+        return NULL;
     }
 
     struct dirent *entry;
-    int c_file_found = 0;
+    char *c_file_found = NULL;
     while ((entry = readdir(folder)) != NULL) {
         if (entry->d_type == DT_REG) {
             char *dot = strrchr(entry->d_name, '.');
             if (dot && strcmp(dot, ".c") == 0) {
-                c_file_found = 1;
+                snprintf(c_file, c_file_size, "%s", entry->d_name);
+                c_file_found = c_file;
                 break;
             }
         }
@@ -140,7 +146,8 @@ int main(int argc, char *argv[]) {
             snprintf(subfolder_path, sizeof(subfolder_path), "%.254s/%.254s", folder_path, entry->d_name);
 
             // Check if the subfolder contains a C source file
-            if (contains_c_file(subfolder_path) == 0) {
+            char c_file_name[1024];
+            if (contains_c_file(subfolder_path, c_file_name, sizeof(c_file_name)) == NULL) {
                 append_result(entry->d_name, 0, "NO_C_FILE");
                 continue;
             }
@@ -165,7 +172,7 @@ int main(int argc, char *argv[]) {
                     exit(1);
                 }
 
-                chdir(subfolder_path);
+                //chdir(subfolder_path);
 
                 pid_t monitor_pid = fork();
                 if (monitor_pid > 0) {
@@ -183,16 +190,26 @@ int main(int argc, char *argv[]) {
 
                 } else {
                     // Monitor process
-                    char compile_command[1024];
-                    //TODO change sprintf
-                    //snprintf(compile_command, sizeof(compile_command), "gcc *.c -o program");
+                    //char compile_command[1024];
+                    char compile_command[1024] = "gcc ";
+                    char full_c_file_path[1024];
 
-                    if (system("gcc *.c -o program") == 0) {
+                    strncpy(full_c_file_path, subfolder_path, sizeof(full_c_file_path) - 1);
+                    strncat(full_c_file_path, "/", sizeof(full_c_file_path) - strlen(full_c_file_path) - 1);
+                    strncat(full_c_file_path, c_file_name, sizeof(full_c_file_path) - strlen(full_c_file_path) - 1);
+
+                    concat_strings(compile_command, sizeof(compile_command), full_c_file_path);
+                    concat_strings(compile_command, sizeof(compile_command), " -o program");
+
+                    if (system(compile_command) == 0) {
                         dup2(output_fd, STDOUT_FILENO);
 
                         close(output_fd);
 
-                        execl("./program", "program", NULL);
+                        //TODO change to execvp
+                        //  execl("./program", "program", NULL);
+                        char *exec_argv[] = {"program", NULL};
+                        execvp("./program", exec_argv);
                     } else {
                         exit(3);
                     }
