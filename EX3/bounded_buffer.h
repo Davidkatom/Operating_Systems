@@ -10,7 +10,7 @@ typedef struct {
     int in, out;
 } BoundedBuffer;
 
-BoundedBuffer* createBuffer(int size);
+BoundedBuffer* CreateBuffer(int size);
 void insertI(BoundedBuffer *buffer, char* item);
 char* removeI(BoundedBuffer *buffer);
 

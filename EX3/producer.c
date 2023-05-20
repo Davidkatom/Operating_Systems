@@ -13,7 +13,7 @@ const char* TYPES[] = {
 
 Producer* CreateProducer(int id, int size){
     Producer *prod = malloc(sizeof(Producer));
-    prod->buffer = createBuffer(5);
+    prod->buffer = CreateBuffer(5);
     //prod->buffer = buffer;
     prod->id = id;
     prod->size = size;
@@ -30,5 +30,6 @@ void* CreateItems(void* args){
         insertI(prod->buffer,item);
     }
     insertI(prod->buffer,"DONE");
+
     return NULL;
 }

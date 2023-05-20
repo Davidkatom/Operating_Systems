@@ -4,7 +4,7 @@
 #include "bounded_buffer.h"
 
 
-BoundedBuffer* createBuffer(int size) {
+BoundedBuffer* CreateBuffer(int size) {
     BoundedBuffer* buffer = malloc(sizeof(BoundedBuffer));
     buffer->buffer = malloc(sizeof(char*) * size);
     buffer->size = size;
