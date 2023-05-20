@@ -21,7 +21,7 @@ Producer* CreateProducer(int id, int size){
 }
 void* CreateItems(void* args){
     Producer* prod = (Producer*)args;  // Cast the argument back to the desired type
-    char* type = TYPES[rand()%3 + 1];
+    char* type = TYPES[rand()%3];
     //printf("%s",type);
     for(int i = 0; i < prod->size; i++){
         char item[50];

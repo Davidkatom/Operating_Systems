@@ -4,12 +4,13 @@
 
 #include "dispatcher.h"
 
-Dispatcher *CreateDispatchers(Producer** prods){
+Dispatcher *CreateDispatchers(Producer** prods, int numOfProds){
     Dispatcher *dispatcher = malloc(sizeof(Dispatcher));
     dispatcher->newsBuffer = CreateBuffer(INT_MAX);
     dispatcher->weatherBuffer = CreateBuffer(INT_MAX);
     dispatcher->sportsBuffer = CreateBuffer(INT_MAX);
     dispatcher->prods = prods;
+    dispatcher->numOfProds = numOfProds;
     return dispatcher;
 }
 
@@ -19,13 +20,13 @@ void* ProcessProducers(void* args) {
     // Assuming that the producers are in an array and terminated by a NULL pointer
     int i = 0;
     while (1) {
+        if(dispatcher->numOfProds == 0)
+            break;
+        if(i == dispatcher->numOfProds)
+            i = 0;
         Producer* prod = dispatcher->prods[i];
 
         // Loop back to the first producer if we've reached the end of the array
-        if (prod == NULL) {
-            i = 0;
-            prod = dispatcher->prods[i];
-        }
 
         // Try to remove an item from the current producer's buffer
         char* item = removeI(prod->buffer);
@@ -38,11 +39,14 @@ void* ProcessProducers(void* args) {
 
         // If the producer is done producing items, free it and remove it from the array
         if (strcmp(item, "DONE") == 0) {
-            free(prod);
+
             // Shift all elements in the array down by one
-            for (int j = i; dispatcher->prods[j] != NULL; j++) {
+            for (int j = i; j <= dispatcher->numOfProds; j++) {
                 dispatcher->prods[j] = dispatcher->prods[j + 1];
             }
+            dispatcher->numOfProds--;
+            //free(prod);
+            prod = NULL;
             continue;
         }
 

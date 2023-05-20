@@ -8,9 +8,8 @@
 
 #define BUFFER_SIZE 5
 #define NUM_ITEMS 10
-#define NUM_PRODUCERS 10
+#define NUM_PRODUCERS 3
 
-BoundedBuffer* buffer;
 
 
 
@@ -35,16 +34,18 @@ int main() {
 
     Producer** producers = malloc(sizeof(Producer*) * NUM_PRODUCERS);
     for(int i = 0; i <= NUM_PRODUCERS; i++){
-        Producer* producer = CreateProducer(0,10);
+        Producer* producer = CreateProducer(i,10);
         producers[i] = producer;
         pthread_create(&producerThreads[i], NULL, CreateItems, producer);
     }
-    Dispatcher* dispatcher = CreateDispatchers(producers);
+    Dispatcher* dispatcher = CreateDispatchers(producers,NUM_PRODUCERS);
     pthread_create(&dispatcherThread, NULL, ProcessProducers, dispatcher);
 
     //pthread_join(producerThread, NULL);
     pthread_join(dispatcherThread, NULL);
-
+    for(int i = 0; i <= NUM_PRODUCERS; i++){
+        pthread_join(producerThreads[i], NULL);
+    }
 
     return 0;
 }

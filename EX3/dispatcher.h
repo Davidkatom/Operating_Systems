@@ -13,11 +13,12 @@
 
 typedef struct {
     Producer** prods;
+    int numOfProds;
+    BoundedBuffer* sportsBuffer;
     BoundedBuffer* newsBuffer;
     BoundedBuffer* weatherBuffer;
-    BoundedBuffer* sportsBuffer;
 
 }Dispatcher;
-Dispatcher *CreateDispatchers(Producer** prods);
+Dispatcher *CreateDispatchers(Producer** prods, int numOfProds);
 void* ProcessProducers(void* args);
 #endif //EX3_DISPATCHER_H
