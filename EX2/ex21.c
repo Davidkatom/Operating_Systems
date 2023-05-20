@@ -38,6 +38,9 @@ int compare_files(int fd1, int fd2) {
     }
 
     do {
+
+
+
         if (isspace(buf1)) {
             identical = 0;
             continue;
