@@ -4,14 +4,14 @@
 #include <semaphore.h>
 
 typedef struct {
-    int *buffer;
+    char** buffer;
     int size;
     sem_t mutex, empty, full;
     int in, out;
 } BoundedBuffer;
 
 BoundedBuffer* createBuffer(int size);
-void insertI(BoundedBuffer *buffer, int item);
-int removeI(BoundedBuffer *buffer);
+void insertI(BoundedBuffer *buffer, char* item);
+char* removeI(BoundedBuffer *buffer);
 
 #endif /* BOUNDED_BUFFER_H */
