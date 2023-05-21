@@ -2,13 +2,22 @@
 // Created by david on 5/20/23.
 //
 
+#include <unistd.h>
 #include "dispatcher.h"
+
+CoEditor *CreateCoEditor(){
+    CoEditor *coEditor = malloc(sizeof(CoEditor *));
+    coEditor->buffer = CreateBuffer(10000);
+    return coEditor;
+}
 
 Dispatcher *CreateDispatchers(Producer** prods, int numOfProds){
     Dispatcher *dispatcher = malloc(sizeof(Dispatcher));
-    dispatcher->newsBuffer = CreateBuffer(INT_MAX);
-    dispatcher->weatherBuffer = CreateBuffer(INT_MAX);
-    dispatcher->sportsBuffer = CreateBuffer(INT_MAX);
+
+    dispatcher->newsEditor = CreateCoEditor();
+    dispatcher->weatherEditor = CreateCoEditor();
+    dispatcher->sportsEditor = CreateCoEditor();
+
     dispatcher->prods = prods;
     dispatcher->numOfProds = numOfProds;
     return dispatcher;
@@ -31,12 +40,6 @@ void* ProcessProducers(void* args) {
         // Try to remove an item from the current producer's buffer
         char* item = removeI(prod->buffer);
 
-        // If the producer has no more items, move on to the next producer
-        if (item == NULL) {
-            i++;
-            continue;
-        }
-
         // If the producer is done producing items, free it and remove it from the array
         if (strcmp(item, "DONE") == 0) {
 
@@ -54,11 +57,11 @@ void* ProcessProducers(void* args) {
         char type[50];
         sscanf(item, "Producer %*d %s %*d", type);
         if (strcmp(type, "SPORTS") == 0) {
-            insertI(dispatcher->sportsBuffer, item);
+            insertI(dispatcher->sportsEditor->buffer, item);
         } else if (strcmp(type, "WEATHER") == 0) {
-            insertI(dispatcher->weatherBuffer, item);
+            insertI(dispatcher->weatherEditor->buffer, item);
         } else if (strcmp(type, "NEWS") == 0) {
-            insertI(dispatcher->newsBuffer, item);
+            insertI(dispatcher->newsEditor->buffer, item);
         }
         printf("Processed %s\n", item);
         i++;
@@ -67,7 +70,17 @@ void* ProcessProducers(void* args) {
     return NULL;
 }
 
-
+void* CoEdit(void* args){
+    CoEditor *editor = (CoEditor *)args;
+    int i = 0;
+    while(1){
+        char* item = removeI(editor->buffer);
+        usleep(100000); // Sleep for 100,000 microseconds (0.1 seconds)
+        printf("Edited number %d\n", i);
+        i++;
+    }
+    return NULL;
+}
 
 
 

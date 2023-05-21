@@ -26,10 +26,9 @@ void* CreateItems(void* args){
     for(int i = 0; i < prod->size; i++){
         char item[50];
         sprintf(item,"Producer %d %s %d", prod->id, type, i);
-        printf("Produces item: %s\n", item);
+        //printf("Produces item: %s\n", item);
         insertI(prod->buffer,item);
     }
     insertI(prod->buffer,"DONE");
-
     return NULL;
 }

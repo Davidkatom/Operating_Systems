@@ -8,44 +8,37 @@
 
 #define BUFFER_SIZE 5
 #define NUM_ITEMS 10
-#define NUM_PRODUCERS 3
-
-
-
-
-//void* con(void* args) {
-//    Producer* prod = (Producer*)args;  // Cast the argument back to the desired type
-//    BoundedBuffer* buffer = prod->buffer;
-//    while(1){
-//        char* item = removeI(buffer);
-//        if(strcmp(item,"DONE") == 0){
-//            free(item); // Remember to free the memory allocated for the string
-//            return NULL;
-//        }
-//
-//        printf("Consumed item: %s\n", item);
-//        free(item); // Remember to free the memory allocated for the string
-//    }
-//}
-
+#define NUM_PRODUCERS 10
 int main() {
     pthread_t dispatcherThread;
     pthread_t* producerThreads= malloc(sizeof(pthread_t)*NUM_PRODUCERS) ;
 
     Producer** producers = malloc(sizeof(Producer*) * NUM_PRODUCERS);
     for(int i = 0; i <= NUM_PRODUCERS; i++){
-        Producer* producer = CreateProducer(i,10);
+        Producer* producer = CreateProducer(i,6);
         producers[i] = producer;
         pthread_create(&producerThreads[i], NULL, CreateItems, producer);
     }
     Dispatcher* dispatcher = CreateDispatchers(producers,NUM_PRODUCERS);
     pthread_create(&dispatcherThread, NULL, ProcessProducers, dispatcher);
 
-    //pthread_join(producerThread, NULL);
+    pthread_t sportsEditor;
+    pthread_t weatherEditor;
+    pthread_t newsEditor;
+
+
+    pthread_create(&sportsEditor, NULL, CoEdit, dispatcher->sportsEditor);
+    pthread_create(&weatherEditor, NULL, CoEdit, dispatcher->weatherEditor);
+    pthread_create(&newsEditor, NULL, CoEdit, dispatcher->newsEditor);
+
+
     pthread_join(dispatcherThread, NULL);
-    for(int i = 0; i <= NUM_PRODUCERS; i++){
-        pthread_join(producerThreads[i], NULL);
-    }
+
+    pthread_join(sportsEditor, NULL);
+    pthread_join(weatherEditor, NULL);
+    pthread_join(newsEditor, NULL);
+
+
 
     return 0;
 }

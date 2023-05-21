@@ -10,15 +10,21 @@
 #include <limits.h>
 #include <string.h>
 #include <pthread.h>
+typedef struct{
+    int type;
+    BoundedBuffer* buffer;
+}CoEditor;
 
 typedef struct {
     Producer** prods;
     int numOfProds;
-    BoundedBuffer* sportsBuffer;
-    BoundedBuffer* newsBuffer;
-    BoundedBuffer* weatherBuffer;
+    CoEditor* sportsEditor;
+    CoEditor* newsEditor;
+    CoEditor* weatherEditor;
 
 }Dispatcher;
+
+void* CoEdit(void* args);
 Dispatcher *CreateDispatchers(Producer** prods, int numOfProds);
 void* ProcessProducers(void* args);
 #endif //EX3_DISPATCHER_H
