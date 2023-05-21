@@ -13,6 +13,6 @@ typedef struct {
     BoundedBuffer* buffer;
 }Producer;
 //Producer *CreateProducer(int id, int size);
-Producer* CreateProducer(int id, int size);
+Producer* CreateProducer(int id, int num_products, int queue_size);
 void *CreateItems(void* prod);
 #endif //EX3_PRODUCER_H

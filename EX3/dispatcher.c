@@ -1,22 +1,23 @@
 //
 // Created by david on 5/20/23.
 //
-
+//TODO check if the dispatcher blocks if the queues are empty
 #include <unistd.h>
 #include "dispatcher.h"
 
-CoEditor *CreateCoEditor(){
+CoEditor *CreateCoEditor(ScreenManager* screenManager, int queueSize){
     CoEditor *coEditor = malloc(sizeof(CoEditor *));
-    coEditor->buffer = CreateBuffer(10000);
+    coEditor->buffer = CreateBuffer(queueSize);
+    coEditor->sm = screenManager;
     return coEditor;
 }
 
-Dispatcher *CreateDispatchers(Producer** prods, int numOfProds){
+Dispatcher *CreateDispatchers(Producer** prods, int numOfProds, ScreenManager *sm, int queueSize){
     Dispatcher *dispatcher = malloc(sizeof(Dispatcher));
 
-    dispatcher->newsEditor = CreateCoEditor();
-    dispatcher->weatherEditor = CreateCoEditor();
-    dispatcher->sportsEditor = CreateCoEditor();
+    dispatcher->newsEditor = CreateCoEditor(sm,queueSize);
+    dispatcher->weatherEditor = CreateCoEditor(sm,queueSize);
+    dispatcher->sportsEditor = CreateCoEditor(sm,queueSize);
 
     dispatcher->prods = prods;
     dispatcher->numOfProds = numOfProds;
@@ -63,21 +64,28 @@ void* ProcessProducers(void* args) {
         } else if (strcmp(type, "NEWS") == 0) {
             insertI(dispatcher->newsEditor->buffer, item);
         }
-        printf("Processed %s\n", item);
+        //printf("Processed %s\n", item);
         i++;
     }
+
+    insertI(dispatcher->sportsEditor->buffer, "DONE");
+    insertI(dispatcher->weatherEditor->buffer, "DONE");
+    insertI(dispatcher->newsEditor->buffer, "DONE");
 
     return NULL;
 }
 
 void* CoEdit(void* args){
     CoEditor *editor = (CoEditor *)args;
-    int i = 0;
     while(1){
         char* item = removeI(editor->buffer);
+        if(strcmp(item, "DONE") == 0){
+            insertI(editor->sm->buffer, "DONE");
+            break;
+        }
         usleep(100000); // Sleep for 100,000 microseconds (0.1 seconds)
-        printf("Edited number %d\n", i);
-        i++;
+        //printf("Edited number %d\n", i);
+        insertI(editor->sm->buffer, item);
     }
     return NULL;
 }
