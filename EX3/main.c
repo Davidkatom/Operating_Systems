@@ -96,18 +96,18 @@ int main(int argc, char* argv[]) {
     fclose(config);
 
 
-    for(int i = 0; i <= producerCount; i++){
-        free(producers[i]->buffer);
-        free(producers[i]);
-    }
-    free(producers);
-    free(producerThreads);
-    free(dispatcher->sportsEditor->buffer);
-    free(dispatcher->weatherEditor->buffer);
-    free(dispatcher->newsEditor->buffer);
-    free(dispatcher->sportsEditor);
-    free(dispatcher->weatherEditor);
-    free(dispatcher->newsEditor);
-    free(dispatcher);
+//    for(int i = 0; i <= producerCount; i++){
+//        free(producers[i]->buffer);
+//        free(producers[i]);
+//    }
+//    free(producers);
+//    free(producerThreads);
+//    free(dispatcher->sportsEditor->buffer);
+//    free(dispatcher->weatherEditor->buffer);
+//    free(dispatcher->newsEditor->buffer);
+//    free(dispatcher->sportsEditor);
+//    free(dispatcher->weatherEditor);
+//    free(dispatcher->newsEditor);
+//    free(dispatcher);
     return 0;
 }
