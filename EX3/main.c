@@ -95,7 +95,7 @@ int main(int argc, char* argv[]) {
 
     fclose(config);
 
-//    free(producers);
+      free(producers);
 //    free(producerThreads);
 //    free(dispatcher->sportsEditor->buffer);
 //    free(dispatcher->weatherEditor->buffer);
