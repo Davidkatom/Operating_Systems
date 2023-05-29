@@ -95,16 +95,16 @@ int main(int argc, char* argv[]) {
 
     fclose(config);
 
-      free(producers);
-//    free(producerThreads);
-//    free(dispatcher->sportsEditor->buffer);
-//    free(dispatcher->weatherEditor->buffer);
-//    free(dispatcher->newsEditor->buffer);
-//    free(dispatcher->sportsEditor);
-//    free(dispatcher->weatherEditor);
-//    free(dispatcher->newsEditor);
-//    free(dispatcher);
-//    free(screenManager->buffer);
-//    free(screenManager);
+//      free(producers);
+    free(producerThreads);
+    free(dispatcher->sportsEditor->buffer);
+    free(dispatcher->weatherEditor->buffer);
+    free(dispatcher->newsEditor->buffer);
+    free(dispatcher->sportsEditor);
+    free(dispatcher->weatherEditor);
+    free(dispatcher->newsEditor);
+    free(dispatcher);
+    free(screenManager->buffer);
+    free(screenManager);
     return 0;
 }
