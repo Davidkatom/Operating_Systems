@@ -4,7 +4,9 @@
 
 #include <malloc.h>
 #include <string.h>
+#include <pthread.h>
 #include "screenManager.h"
+
 
 ScreenManager *CreateScreenManager(){
     ScreenManager* sm = malloc(sizeof(ScreenManager));
@@ -13,6 +15,7 @@ ScreenManager *CreateScreenManager(){
 }
 
 void* PrintToScreen(void *args){
+
     ScreenManager* sm = (ScreenManager*)args;
     int i = 3;
     while(1){
@@ -25,5 +28,6 @@ void* PrintToScreen(void *args){
         }
         printf("%s\n",item);
     }
+    printf("DONE\n");
     return NULL;
 }

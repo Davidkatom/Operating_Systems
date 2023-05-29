@@ -1,7 +1,9 @@
 #include <semaphore.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 #include "bounded_buffer.h"
+#include <unistd.h>
 
 
 BoundedBuffer* CreateBuffer(int size) {
@@ -19,7 +21,9 @@ BoundedBuffer* CreateBuffer(int size) {
 void insertI(BoundedBuffer* buffer, char* item) {
     sem_wait(&buffer->empty);
     sem_wait(&buffer->mutex);
+    usleep(10000);
     buffer->buffer[buffer->in] = strdup(item);
+    //printf("Buffer: %s\n", item);
     buffer->in = (buffer->in + 1) % buffer->size;
     sem_post(&buffer->mutex);
     sem_post(&buffer->full);
@@ -35,3 +39,4 @@ char* removeI(BoundedBuffer* buffer) {
     sem_post(&buffer->empty);
     return item;
 }
+

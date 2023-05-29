@@ -5,19 +5,20 @@
 #include <unistd.h>
 #include "dispatcher.h"
 
-CoEditor *CreateCoEditor(ScreenManager* screenManager, int queueSize){
-    CoEditor *coEditor = malloc(sizeof(CoEditor *));
+CoEditor *CreateCoEditor(int type, ScreenManager* screenManager, int queueSize){
+    CoEditor *coEditor = malloc(sizeof(CoEditor));
     coEditor->buffer = CreateBuffer(queueSize);
     coEditor->sm = screenManager;
+    coEditor->type = type;
     return coEditor;
 }
 
 Dispatcher *CreateDispatchers(Producer** prods, int numOfProds, ScreenManager *sm, int queueSize){
     Dispatcher *dispatcher = malloc(sizeof(Dispatcher));
 
-    dispatcher->newsEditor = CreateCoEditor(sm,queueSize);
-    dispatcher->weatherEditor = CreateCoEditor(sm,queueSize);
-    dispatcher->sportsEditor = CreateCoEditor(sm,queueSize);
+    dispatcher->newsEditor = CreateCoEditor(0,sm,queueSize);
+    dispatcher->weatherEditor = CreateCoEditor(1,sm,queueSize);
+    dispatcher->sportsEditor = CreateCoEditor(2,sm,queueSize);
 
     dispatcher->prods = prods;
     dispatcher->numOfProds = numOfProds;
@@ -26,8 +27,6 @@ Dispatcher *CreateDispatchers(Producer** prods, int numOfProds, ScreenManager *s
 
 void* ProcessProducers(void* args) {
     Dispatcher* dispatcher = (Dispatcher*)args;
-
-    // Assuming that the producers are in an array and terminated by a NULL pointer
     int i = 0;
     while (1) {
         if(dispatcher->numOfProds == 0)
@@ -55,14 +54,16 @@ void* ProcessProducers(void* args) {
         }
 
         // Determine the type of the item and add it to the appropriate buffer in the dispatcher
-        char type[50];
-        sscanf(item, "Producer %*d %s %*d", type);
+        char type[256] = {0};  // This initializes the whole array to '\0'
+        sscanf(item, "Producer: %*d %s %*d\n", type);
         if (strcmp(type, "SPORTS") == 0) {
             insertI(dispatcher->sportsEditor->buffer, item);
         } else if (strcmp(type, "WEATHER") == 0) {
             insertI(dispatcher->weatherEditor->buffer, item);
+
         } else if (strcmp(type, "NEWS") == 0) {
             insertI(dispatcher->newsEditor->buffer, item);
+
         }
         //printf("Processed %s\n", item);
         i++;
@@ -78,14 +79,17 @@ void* ProcessProducers(void* args) {
 void* CoEdit(void* args){
     CoEditor *editor = (CoEditor *)args;
     while(1){
+        //printf("editor: %d\n",editor->type);
         char* item = removeI(editor->buffer);
+
         if(strcmp(item, "DONE") == 0){
             insertI(editor->sm->buffer, "DONE");
             break;
         }
         usleep(100000); // Sleep for 100,000 microseconds (0.1 seconds)
-        //printf("Edited number %d\n", i);
         insertI(editor->sm->buffer, item);
+
+
     }
     return NULL;
 }
