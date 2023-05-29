@@ -31,7 +31,7 @@ void* CreateItems(void* args){
     for(int i = 0; i < prod->size; i++){
         //pthread_mutex_lock(prod->lock);   // lock the mutex
         int rnd = rand()%3;
-        char* type = TYPES[rnd];
+        const char* type = TYPES[rnd];
         char item[50];
         sprintf(item,"Producer: %d %s %d", prod->id, type, counts[rnd]);
         //printf("%s\n",item);

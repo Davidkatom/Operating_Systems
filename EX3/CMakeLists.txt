@@ -7,4 +7,4 @@ add_executable(EX3 bounded_buffer.c bounded_buffer.h main.c producer.c producer.
 # specify the C standard
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED True)
-
+target_link_libraries(EX3 pthread)
