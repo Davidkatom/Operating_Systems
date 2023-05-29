@@ -98,6 +98,9 @@ int main(int argc, char* argv[]) {
 
 //      free(producers);
     free(producerThreads);
+    free(dispatcher->sportsEditor->buffer->buffer);
+    free(dispatcher->weatherEditor->buffer->buffer);
+    free(dispatcher->newsEditor->buffer->buffer);
     free(dispatcher->sportsEditor->buffer);
     free(dispatcher->weatherEditor->buffer);
     free(dispatcher->newsEditor->buffer);
