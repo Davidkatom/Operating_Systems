@@ -34,7 +34,8 @@ int main(int argc, char* argv[]) {
 
     pthread_t dispatcherThread;
     pthread_t* producerThreads= malloc(sizeof(pthread_t)*producerCount) ;
-    Producer** producers = malloc(sizeof(Producer*) * producerCount);
+    //Producer** producers = malloc(sizeof(Producer*) * producerCount);
+    Producer* producers[producerCount];
 
     int i = 0;
     int numItems, queueSize, id;

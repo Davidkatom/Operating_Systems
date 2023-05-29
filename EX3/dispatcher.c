@@ -42,9 +42,9 @@ void* ProcessProducers(void* args) {
         // If the producer is done producing items, free it and remove it from the array
         if (strcmp(item, "DONE") == 0) {
 
-//            free(prod->buffer->buffer);
-//            free(prod->buffer);
-//            free(prod);
+            free(prod->buffer->buffer);
+            free(prod->buffer);
+            free(prod);
             // Shift all elements in the array down by one
             for (int j = i; j <= dispatcher->numOfProds; j++) {
                 dispatcher->prods[j] = dispatcher->prods[j + 1];
